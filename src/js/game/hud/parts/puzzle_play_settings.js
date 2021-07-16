@@ -24,7 +24,6 @@ export class HUDPuzzlePlaySettings extends BaseHUDPart {
                 `
                         <button class="styledButton clearItems">${T.ingame.puzzleEditorSettings.clearItems}</button>
                         <button class="styledButton clearBuildings">${T.ingame.puzzleEditorSettings.resetPuzzle}</button>
-
                 `
             );
 

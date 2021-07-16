@@ -33,8 +33,13 @@ export class PuzzleReportsState extends TextualGameState {
         this.language = this.app.settings.getLanguage();
 
         this.reportsHtml = this.htmlElement.querySelector(".puzzleReports");
+        this.loadReports();
+    }
+
+    loadReports() {
         this.app.clientApi
             .apiListPuzzleReports()
+            .then(reports => reports.filter(r => !this.app.hiddenPuzzleReportsMgr.isHidden(r.shortKey)))
             .then(reports => {
                 this.reportsHtml.innerHTML = "";
                 reports.forEach(report => this.appendReport(report));
@@ -137,6 +142,7 @@ export class PuzzleReportsState extends TextualGameState {
             gameModeId: enumGameModeIds.puzzlePlay,
             gameModeParameters: {
                 puzzle,
+                report: true,
             },
             savegame,
         });

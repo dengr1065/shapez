@@ -60,6 +60,8 @@ export class Dialog {
         this.closeButton = closeButton;
 
         this.closeRequested = new Signal();
+
+        /** @type {{ [name: string]: Signal }} */
         this.buttonSignals = {};
 
         for (let i = 0; i < buttons.length; ++i) {

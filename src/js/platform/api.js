@@ -39,7 +39,7 @@ export class ClientAPI {
 
     isPuzzleModerator() {
         /** @todo get from login response */
-        return true;
+        return G_IS_DEV;
     }
 
     /**

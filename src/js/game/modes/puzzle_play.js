@@ -181,7 +181,7 @@ export class PuzzlePlayGameMode extends PuzzleGameMode {
                     },
                     err => {
                         closeLoading();
-                        const { ok } = this.root.hud.parts.dialogs.showInfo(
+                        this.root.hud.parts.dialogs.showInfo(
                             T.dialogs.puzzleReportError.title,
                             T.dialogs.puzzleReportError.desc + " " + err
                         );

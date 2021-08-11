@@ -68,7 +68,7 @@ export class HUDPuzzlePlayMetadata extends BaseHUDPart {
     report() {
         const mode = /** @type {PuzzlePlayGameMode} */ (this.root.gameMode);
         mode.reportPuzzle().then(() => {
-            if (this.root.app.clientApi.isPuzzleModerator) {
+            if (this.root.gameState.creationPayload.gameModeParameters.report) {
                 this.root.gameState.moveToState("PuzzleReportsState");
             }
         });

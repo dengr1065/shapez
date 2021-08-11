@@ -157,20 +157,18 @@ export class InGameState extends GameState {
      * Goes back to the menu state
      */
     goBackToMenu() {
-        if (this.gameModeId == enumGameModeIds.puzzlePlay && this.creationPayload.gameModeParameters.report) {
-            const result = confirm("Hide reports for this puzzle?");
-            if (result) {
-                const key = this.creationPayload.gameModeParameters.puzzle.meta.shortKey;
-                this.app.hiddenPuzzleReportsMgr.hideReport(key);
-            }
-            return this.saveThenGoToState("PuzzleReportsState");
-        }
-
         if ([enumGameModeIds.puzzleEdit, enumGameModeIds.puzzlePlay].includes(this.gameModeId)) {
             this.saveThenGoToState("PuzzleMenuState");
         } else {
             this.saveThenGoToState("MainMenuState");
         }
+    }
+
+    /**
+     * Goes back to the puzzle reports state
+     */
+    goToReports() {
+        this.saveThenGoToState("PuzzleReportsState");
     }
 
     /**

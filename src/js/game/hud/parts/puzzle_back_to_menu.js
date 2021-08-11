@@ -16,6 +16,17 @@ export class HUDPuzzleBackToMenu extends BaseHUDPart {
     initialize() {}
 
     back() {
-        this.root.gameState.goBackToMenu();
+        const gameState = this.root.gameState;
+        if (gameState.creationPayload.gameModeParameters.report) {
+            const result = confirm("Hide reports for this puzzle?");
+            if (result) {
+                const key = gameState.creationPayload.gameModeParameters.puzzle.meta.shortKey;
+                this.root.app.hiddenPuzzleReportsMgr.hideReport(key);
+            }
+
+            gameState.goToReports();
+        } else {
+            gameState.goBackToMenu();
+        }
     }
 }

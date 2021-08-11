@@ -3,6 +3,7 @@ import { TextualGameState } from "../core/textual_game_state";
 import { enumGameModeIds } from "../game/game_mode";
 import { HUDModalDialogs } from "../game/hud/parts/modal_dialogs";
 import { ShapeDefinition } from "../game/shape_definition";
+import { MUSIC } from "../platform/sound";
 import { Savegame } from "../savegame/savegame";
 import { T } from "../translations";
 
@@ -11,6 +12,10 @@ const logger = createLogger("puzzle-reports");
 export class PuzzleReportsState extends TextualGameState {
     constructor() {
         super("PuzzleReportsState");
+    }
+
+    getThemeMusic() {
+        return MUSIC.puzzle;
     }
 
     getStateHeaderTitle() {

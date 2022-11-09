@@ -259,14 +259,12 @@ export class PreloadState extends GameState {
     showFailMessage(text) {
         logger.error("App init failed:", text);
 
-        const email = "bugs@shapez.io";
-
         const subElement = document.createElement("div");
         subElement.classList.add("failureBox");
 
         subElement.innerHTML = `
                 <div class="logo">
-                    <img src="${cachebust("res/" + getLogoSprite())}" alt="Shapez.io Logo">
+                    <img src="${cachebust("res/" + getLogoSprite())}" alt="shapez Logo">
                 </div>
                 <div class="failureInner">
                     <div class="errorHeader">

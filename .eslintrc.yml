@@ -7,6 +7,7 @@ globals:
     G_IS_DEV: "readonly"
     assert: "readonly"
     assertAlways: "readonly"
+    ipcRenderer: "readonly"
 extends:
     - "eslint:recommended"
     - "plugin:@typescript-eslint/eslint-recommended"

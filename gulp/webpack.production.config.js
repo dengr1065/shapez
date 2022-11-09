@@ -135,7 +135,7 @@ module.exports = ({
                             braces: false,
                             ecma: es6 ? 6 : 5,
                             preamble:
-                                "/* shapez.io Codebase - Copyright 2022 tobspr Games - " +
+                                "/* shapez Codebase - Copyright 2022 tobspr Games - " +
                                 getVersion() +
                                 " @ " +
                                 getRevision() +

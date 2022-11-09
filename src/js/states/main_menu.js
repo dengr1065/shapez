@@ -17,7 +17,6 @@ import {
 } from "../core/utils";
 import { HUDModalDialogs } from "../game/hud/parts/modal_dialogs";
 import { MODS } from "../mods/modloader";
-import { PlatformWrapperImplBrowser } from "../platform/browser/wrapper";
 import { PlatformWrapperImplElectron } from "../platform/electron/wrapper";
 import { Savegame } from "../savegame/savegame";
 import { T } from "../translations";
@@ -51,7 +50,7 @@ export class MainMenuState extends GameState {
             </video>
 
             <div class="logo">
-                <img src="${cachebust("res/" + getLogoSprite())}" alt="shapez.io Logo"
+                <img src="${cachebust("res/" + getLogoSprite())}" alt="shapez Logo"
                     width="${Math.round((710 / 3) * this.app.getEffectiveUiScale())}"
                     height="${Math.round((180 / 3) * this.app.getEffectiveUiScale())}"
                 >
@@ -73,18 +72,6 @@ export class MainMenuState extends GameState {
                             </div>`
                                 : ""
                         }
-
-                        ${
-                            !ownsPuzzleDLC && !hasMods
-                                ? `
-                            <div class="puzzleContainer notOwned">
-                                <p>${T.mainMenu.puzzleDlcText}</p>
-                                <button class="styledButton puzzleDlcGetButton">${T.mainMenu.puzzleDlcViewNow}</button>
-                            </div>`
-                                : ""
-                        }
-
-
                 ${
                     hasMods
                         ? `

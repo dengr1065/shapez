@@ -25,7 +25,8 @@ const LOG = createLogger("mods");
  *   id: string;
  *   minimumGameVersion?: string;
  *   settings: [];
- *   doesNotAffectSavegame?: boolean
+ *   doesNotAffectSavegame?: boolean;
+ *   filename: string
  * }} ModMetadata
  */
 
@@ -148,6 +149,7 @@ export class ModLoader {
         LOG.log("hook:init", this.app, this.app.storage);
         this.exposeExports();
 
+        /** @type {{ filename: string, source: string }[]} */
         let mods = [];
         if (G_IS_STANDALONE) {
             mods = await ipcRenderer.invoke("get-mods");
@@ -166,11 +168,14 @@ export class ModLoader {
                         "Failed to load " + modURLs[i] + ": " + response.status + " " + response.statusText
                     );
                 }
-                mods.push(await response.text());
+                mods.push({
+                    filename: modURLs[i],
+                    source: await response.text(),
+                });
             }
         }
 
-        window.$shapez_registerMod = (modClass, meta) => {
+        const registerMod = (modFile, modClass, meta) => {
             if (this.initialized) {
                 throw new Error("Can't register mod after modloader is initialized");
             }
@@ -178,14 +183,17 @@ export class ModLoader {
                 console.warn("Not registering mod", meta, "since a mod with the same id is already loaded");
                 return;
             }
+
+            meta.filename = modFile;
             this.modLoadQueue.push({
                 modClass,
                 meta,
             });
         };
 
-        mods.forEach(modCode => {
-            modCode += `
+        mods.forEach(({ filename, source }) => {
+            window.$shapez_registerMod = registerMod.bind(this, filename);
+            source += `
                         if (typeof Mod !== 'undefined') {
                             if (typeof METADATA !== 'object') {
                                 throw new Error("No METADATA variable found");
@@ -194,11 +202,11 @@ export class ModLoader {
                         }
                     `;
             try {
-                const func = new Function(modCode);
+                const func = new Function(source);
                 func();
             } catch (ex) {
                 console.error(ex);
-                alert("Failed to parse mod (launch with --dev for more info): \n\n" + ex);
+                ipcRenderer.send("mod-error", filename, ex);
             }
         });
 
@@ -211,19 +219,16 @@ export class ModLoader {
             if (meta.minimumGameVersion) {
                 const minimumGameVersion = meta.minimumGameVersion;
                 if (!semverValidRange(minimumGameVersion)) {
-                    alert("Mod " + meta.id + " has invalid minimumGameVersion: " + minimumGameVersion);
+                    const error = new Error(`Invalid minimumGameVersion specified: ${minimumGameVersion}`);
+                    ipcRenderer.send("mod-error", meta.filename, error);
                     continue;
                 }
+
                 if (!semverSatisifies(G_BUILD_VERSION, minimumGameVersion)) {
-                    alert(
-                        "Mod  '" +
-                            meta.id +
-                            "' is incompatible with this version of the game: \n\n" +
-                            "Mod requires version " +
-                            minimumGameVersion +
-                            " but this game has version " +
-                            G_BUILD_VERSION
+                    const error = new Error(
+                        `This game version (${G_BUILD_VERSION}) is not supported, ${minimumGameVersion} is required`
                     );
+                    ipcRenderer.send("mod-error", meta.filename, error);
                     continue;
                 }
             }
@@ -256,10 +261,12 @@ export class ModLoader {
                 this.mods.push(mod);
             } catch (ex) {
                 console.error(ex);
-                alert("Failed to initialize mods (launch with --dev for more info): \n\n" + ex);
+                ipcRenderer.send("mod-error", meta.filename, ex);
             }
         }
 
+        // Once initialization of all mods is done, show all errors
+        ipcRenderer.send("show-mod-errors");
         this.modLoadQueue = [];
         this.initialized = true;
     }

@@ -9,13 +9,11 @@
         "startDevGpu": "electron --enable-gpu-rasterization --enable-accelerated-2d-canvas --num-raster-threads=8 --enable-zero-copy . --dev --local",
         "start": "electron --disable-direct-composition --in-process-gpu ."
     },
-    "devDependencies": {},
-    "optionalDependencies": {
-        "shapez.io-private-artifacts": "github:tobspr/shapez.io-private-artifacts#abi-v99"
+    "devDependencies": {
+        "electron": "^21.2.2"
     },
     "dependencies": {
         "async-lock": "^1.2.8",
-        "electron": "16.2.8",
         "electron-window-state": "^5.0.3"
     }
 }

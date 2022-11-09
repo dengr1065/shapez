@@ -1,7 +1,5 @@
 /* eslint-disable */
 
-require("colors");
-
 const gulp = require("gulp");
 const browserSync = require("browser-sync").create({});
 const path = require("path");
@@ -17,13 +15,6 @@ const $ = require("gulp-load-plugins")({
 // Check environment variables
 
 const envVars = [
-    "SHAPEZ_CLI_SERVER_HOST",
-    "SHAPEZ_CLI_ALPHA_FTP_USER",
-    "SHAPEZ_CLI_ALPHA_FTP_PW",
-    "SHAPEZ_CLI_STAGING_FTP_USER",
-    "SHAPEZ_CLI_STAGING_FTP_PW",
-    "SHAPEZ_CLI_LIVE_FTP_USER",
-    "SHAPEZ_CLI_LIVE_FTP_PW",
     "SHAPEZ_CLI_APPLE_ID",
     "SHAPEZ_CLI_APPLE_CERT_NAME",
     "SHAPEZ_CLI_GITHUB_USER",
@@ -58,9 +49,6 @@ js.gulptasksJS($, gulp, buildFolder, browserSync);
 const html = require("./html");
 html.gulptasksHTML($, gulp, buildFolder);
 
-const ftp = require("./ftp");
-ftp.gulptasksFTP($, gulp, buildFolder);
-
 const docs = require("./docs");
 docs.gulptasksDocs($, gulp, buildFolder);
 
@@ -68,7 +56,6 @@ const standalone = require("./standalone");
 standalone.gulptasksStandalone($, gulp);
 
 const translations = require("./translations");
-const { BUILD_VARIANTS } = require("./build_variants");
 translations.gulptasksTranslations($, gulp);
 
 /////////////////////  BUILD TASKS  /////////////////////
@@ -139,12 +126,7 @@ gulp.task("main.webserver", () => {
     );
 });
 
-/**
- *
- * @param {object} param0
- * @param {keyof typeof BUILD_VARIANTS} param0.version
- */
-function serveHTML({ version = "web-dev" }) {
+function serveHTML() {
     browserSync.init({
         server: [buildFolder, path.join(baseDir, "mod_examples")],
         port: 3005,
@@ -168,11 +150,11 @@ function serveHTML({ version = "web-dev" }) {
     gulp.watch(["../src/**/*.scss"], gulp.series("css.dev"));
 
     // Watch .html files, those trigger a html rebuild
-    gulp.watch("../src/**/*.html", gulp.series("html." + version + ".dev"));
-    gulp.watch("./preloader/*.*", gulp.series("html." + version + ".dev"));
+    gulp.watch("../src/**/*.html", gulp.series("html.dev"));
+    gulp.watch("./preloader/*.*", gulp.series("html.dev"));
 
     // Watch translations
-    gulp.watch("../translations/**/*.yaml", gulp.series("translations.convertToJson"));
+    gulp.watch("../translations/**/*.yaml", gulp.series("translations.fullBuild"));
 
     gulp.watch(
         ["../res_raw/sounds/sfx/*.mp3", "../res_raw/sounds/sfx/*.wav"],
@@ -202,7 +184,7 @@ function serveHTML({ version = "web-dev" }) {
         return gulp.src(path).pipe(browserSync.reload({ stream: true }));
     });
 
-    gulp.series("js." + version + ".dev.watch")(() => true);
+    gulp.series("js.dev.watch")(() => true);
 }
 
 // Pre and postbuild
@@ -234,84 +216,15 @@ gulp.task(
     )
 );
 
-// Builds everything for every variant
-for (const variant in BUILD_VARIANTS) {
-    const data = BUILD_VARIANTS[variant];
-    const buildName = "build." + variant;
+gulp.task("build.code", gulp.series("sounds.fullbuildHQ", "translations.fullBuild", "js"));
+gulp.task("build.resourcesAndCode", gulp.parallel("step.baseResources", "build.code"));
+gulp.task("build.all", gulp.series("build.resourcesAndCode", "css", "html"));
+gulp.task("build", gulp.series("utils.cleanup", "build.all", "step.postbuild"));
 
-    // build
-    gulp.task(
-        buildName + ".code",
-        gulp.series(
-            data.standalone ? "sounds.fullbuildHQ" : "sounds.fullbuild",
-            "translations.fullBuild",
-            "js." + variant + ".prod"
-        )
-    );
+gulp.task("bundle", gulp.series("utils.cleanBuildOutputFolder", "build", "standalone.build"));
 
-    gulp.task(buildName + ".resourcesAndCode", gulp.parallel("step.baseResources", buildName + ".code"));
-
-    gulp.task(
-        buildName + ".all",
-        gulp.series(buildName + ".resourcesAndCode", "css.prod-standalone", "html." + variant + ".prod")
-    );
-
-    gulp.task(buildName, gulp.series("utils.cleanup", buildName + ".all", "step.postbuild"));
-
-    // bundle
-    if (data.standalone) {
-        gulp.task(
-            "bundle." + variant + ".from-windows",
-            gulp.series(buildName, "standalone." + variant + ".build-from-windows")
-        );
-        gulp.task(
-            "bundle." + variant + ".from-darwin",
-            gulp.series(buildName, "standalone." + variant + ".build-from-darwin")
-        );
-    }
-
-    // serve
-    gulp.task(
-        "serve." + variant,
-        gulp.series("build.prepare.dev", "html." + variant + ".dev", () => serveHTML({ version: variant }))
-    );
-}
-
-// Deploying!
-gulp.task(
-    "deploy.staging",
-    gulp.series("utils.requireCleanWorkingTree", "build.web-shapezio-beta", "ftp.upload.staging")
-);
-gulp.task(
-    "deploy.prod",
-    gulp.series("utils.requireCleanWorkingTree", "build.web-shapezio", "ftp.upload.prod")
-);
-
-// Bundling (pre upload)
-gulp.task(
-    "bundle.steam.from-darwin",
-    gulp.series("utils.cleanBuildOutputFolder", "bundle.standalone-steam.from-darwin")
-);
-gulp.task(
-    "bundle.steam.from-windows",
-    gulp.series(
-        "utils.cleanBuildOutputFolder",
-        "bundle.standalone-steam.from-windows",
-        "bundle.standalone-steam-china.from-windows"
-    )
-);
-gulp.task(
-    "bundle.steam-demo.from-darwin",
-    gulp.series("utils.cleanBuildOutputFolder", "bundle.standalone-steam-demo.from-darwin")
-);
-gulp.task(
-    "bundle.steam-demo.from-windows",
-    gulp.series(
-        "utils.cleanBuildOutputFolder",
-        "bundle.standalone-steam-demo.from-windows",
-        "bundle.standalone-steam-china-demo.from-windows"
-    )
-);
+// serve
+gulp.task("serve", gulp.series("build.prepare.dev", "html.dev", serveHTML));
 
 // Default task (dev, localhost)
-gulp.task("default", gulp.series("serve.web-localhost"));
+gulp.task("default", gulp.series("serve"));

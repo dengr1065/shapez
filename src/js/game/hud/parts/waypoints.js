@@ -45,7 +45,7 @@ export class HUDWaypoints extends BaseHUDPart {
      */
     createElements(parent) {
         // Create the helper box on the lower right when zooming out
-        if (this.root.app.settings.getAllSettings().offerHints && !G_WEGAME_VERSION) {
+        if (this.root.app.settings.getAllSettings().offerHints) {
             this.hintElement = makeDiv(
                 parent,
                 "ingame_HUD_Waypoints_Hint",
@@ -121,12 +121,10 @@ export class HUDWaypoints extends BaseHUDPart {
         }
 
         // Catch mouse and key events
-        if (!G_WEGAME_VERSION) {
-            this.root.camera.downPreHandler.add(this.onMouseDown, this);
-            this.root.keyMapper
-                .getBinding(KEYMAPPINGS.navigation.createMarker)
-                .add(() => this.requestSaveMarker({}));
-        }
+        this.root.camera.downPreHandler.add(this.onMouseDown, this);
+        this.root.keyMapper
+            .getBinding(KEYMAPPINGS.navigation.createMarker)
+            .add(() => this.requestSaveMarker({}));
 
         /**
          * Stores at how much opacity the markers should be rendered on the map.
@@ -313,18 +311,6 @@ export class HUDWaypoints extends BaseHUDPart {
             const center = worldPos || this.root.camera.center;
 
             dialog.buttonSignals.ok.add(() => {
-                // Show info that you can have only N markers in the demo,
-                // actually show this *after* entering the name so you want the
-                // standalone even more (I'm evil :P)
-                if (this.waypoints.length > this.root.app.restrictionMgr.getMaximumWaypoints()) {
-                    this.root.hud.parts.dialogs.showFeatureRestrictionInfo(
-                        "",
-                        T.dialogs.markerDemoLimit.desc
-                    );
-                    return;
-                }
-
-                // Actually create the waypoint
                 this.addWaypoint(markerNameInput.getValue(), center);
             });
         }

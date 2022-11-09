@@ -29,15 +29,12 @@ import { HUDGameMenu } from "../hud/parts/game_menu";
 import { HUDConstantSignalEdit } from "../hud/parts/constant_signal_edit";
 import { IS_MOBILE } from "../../core/config";
 import { HUDKeybindingOverlay } from "../hud/parts/keybinding_overlay";
-import { HUDWatermark } from "../hud/parts/watermark";
-import { HUDStandaloneAdvantages } from "../hud/parts/standalone_advantages";
 import { HUDPartTutorialHints } from "../hud/parts/tutorial_hints";
 import { HUDInteractiveTutorial } from "../hud/parts/interactive_tutorial";
 import { MetaBlockBuilding } from "../buildings/block";
 import { MetaItemProducerBuilding } from "../buildings/item_producer";
 import { MOD_SIGNALS } from "../../mods/mod_signals";
 import { finalGameShape, generateLevelsForVariant } from "./levels";
-import { WEB_STEAM_SSO_AUTHENTICATED } from "../../core/steam_sso";
 
 /** @typedef {{
  *   shape: string,
@@ -64,8 +61,6 @@ const preparementShape = "CpRpCp--:SwSwSwSw";
 
 // Tiers need % of the previous tier as requirement too
 const tierGrowth = 2.5;
-
-const chinaShapes = G_WEGAME_VERSION || G_CHINA_VERSION;
 
 const upgradesCache = {};
 
@@ -151,9 +146,7 @@ function generateUpgrades(limitedVersion = false, difficulty = 1) {
             {
                 required: [
                     {
-                        shape: chinaShapes
-                            ? "CyCyCyCy:CyCyCyCy:RyRyRyRy:RuRuRuRu"
-                            : "CbRbRbCb:CwCwCwCw:WbWbWbWb",
+                        shape: "CbRbRbCb:CwCwCwCw:WbWbWbWb",
                         amount: 50000,
                     },
                 ],
@@ -212,7 +205,7 @@ function generateUpgrades(limitedVersion = false, difficulty = 1) {
             {
                 required: [
                     {
-                        shape: chinaShapes ? "CuCuCuCu:CwCwCwCw:Sb--Sr--" : "RpRpRpRp:CwCwCwCw",
+                        shape: "RpRpRpRp:CwCwCwCw",
                         amount: 6500,
                     },
                 ],
@@ -356,15 +349,8 @@ export class RegularGameMode extends GameMode {
             this.additionalHudParts.keybindingOverlay = HUDKeybindingOverlay;
         }
 
-        if (this.root.app.restrictionMgr.getIsStandaloneMarketingActive()) {
-            this.additionalHudParts.watermark = HUDWatermark;
-            this.additionalHudParts.standaloneAdvantages = HUDStandaloneAdvantages;
-        }
-
         if (this.root.app.settings.getAllSettings().offerHints) {
-            if (!G_WEGAME_VERSION) {
-                this.additionalHudParts.tutorialHints = HUDPartTutorialHints;
-            }
+            this.additionalHudParts.tutorialHints = HUDPartTutorialHints;
             this.additionalHudParts.interactiveTutorial = HUDInteractiveTutorial;
         }
 
@@ -378,13 +364,7 @@ export class RegularGameMode extends GameMode {
     }
 
     get difficultyMultiplicator() {
-        if (G_IS_STANDALONE || WEB_STEAM_SSO_AUTHENTICATED) {
-            if (G_IS_STEAM_DEMO) {
-                return 0.75;
-            }
-            return 1;
-        }
-        return 0.5;
+        return 1;
     }
 
     /**
@@ -392,10 +372,7 @@ export class RegularGameMode extends GameMode {
      * @returns {Object<string, UpgradeTiers>}
      */
     getUpgrades() {
-        return generateUpgrades(
-            !this.root.app.restrictionMgr.getHasExtendedUpgrades(),
-            this.difficultyMultiplicator
-        );
+        return generateUpgrades(false, this.difficultyMultiplicator);
     }
 
     /**
@@ -412,7 +389,7 @@ export class RegularGameMode extends GameMode {
      * @returns {boolean}
      */
     getIsFreeplayAvailable() {
-        return this.root.app.restrictionMgr.getHasExtendedLevelsAndFreeplay();
+        return true;
     }
 
     /** @returns {boolean} */

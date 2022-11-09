@@ -232,20 +232,16 @@ export class HUDPinnedShapes extends BaseHUDPart {
         }
 
         // Show small info icon
-        let infoDetector;
-        if (!G_WEGAME_VERSION) {
-            const infoButton = document.createElement("button");
-            infoButton.classList.add("infoButton");
-            element.appendChild(infoButton);
-            infoDetector = new ClickDetector(infoButton, {
-                consumeEvents: true,
-                preventDefault: true,
-                targetOnly: true,
-            });
-            infoDetector.click.add(() =>
-                this.root.hud.signals.viewShapeDetailsRequested.dispatch(definition)
-            );
-        }
+        const infoButton = document.createElement("button");
+        infoButton.classList.add("infoButton");
+        element.appendChild(infoButton);
+
+        const infoDetector = new ClickDetector(infoButton, {
+            consumeEvents: true,
+            preventDefault: true,
+            targetOnly: true,
+        });
+        infoDetector.click.add(() => this.root.hud.signals.viewShapeDetailsRequested.dispatch(definition));
 
         const amountLabel = makeDiv(element, null, ["amountLabel"], "");
 

@@ -1,6 +1,5 @@
 import { T } from "../translations";
 import { rando } from "@nastyox/rando.js";
-import { WEB_STEAM_SSO_AUTHENTICATED } from "./steam_sso";
 
 const bigNumberSuffixTranslationKeys = ["thousands", "millions", "billions", "trillions"];
 
@@ -423,41 +422,7 @@ export function removeAllChildren(elem) {
  * Returns if the game supports this browser
  */
 export function isSupportedBrowser() {
-    // please note,
-    // that IE11 now returns undefined again for window.chrome
-    // and new Opera 30 outputs true for window.chrome
-    // but needs to check if window.opr is not undefined
-    // and new IE Edge outputs to true now for window.chrome
-    // and if not iOS Chrome check
-    // so use the below updated condition
-
-    if (G_IS_STANDALONE) {
-        return true;
-    }
-
-    // @ts-ignore
-    var isChromium = window.chrome;
-    var winNav = window.navigator;
-    var vendorName = winNav.vendor;
-    // @ts-ignore
-    var isIEedge = winNav.userAgent.indexOf("Edge") > -1;
-    var isIOSChrome = winNav.userAgent.match("CriOS");
-
-    if (isIOSChrome) {
-        // is Google Chrome on IOS
-        return false;
-    } else if (
-        isChromium !== null &&
-        typeof isChromium !== "undefined" &&
-        vendorName === "Google Inc." &&
-        isIEedge === false
-    ) {
-        // is Google Chrome
-        return true;
-    } else {
-        // not Google Chrome
-        return false;
-    }
+    return true;
 }
 
 /**
@@ -694,10 +659,6 @@ const romanLiteralsCache = ["0"];
  * @returns {string}
  */
 export function getRomanNumber(number) {
-    if (G_WEGAME_VERSION) {
-        return String(number);
-    }
-
     number = Math.max(0, Math.round(number));
     if (romanLiteralsCache[number]) {
         return romanLiteralsCache[number];
@@ -753,26 +714,6 @@ export function getRomanNumber(number) {
  * Returns the appropriate logo sprite path
  */
 export function getLogoSprite() {
-    if (G_WEGAME_VERSION) {
-        return "logo_wegame.png";
-    }
-
-    if (G_IS_STEAM_DEMO) {
-        return "logo_demo.png";
-    }
-
-    if (G_CHINA_VERSION) {
-        return "logo_cn.png";
-    }
-
-    if (G_IS_STANDALONE || WEB_STEAM_SSO_AUTHENTICATED) {
-        return "logo.png";
-    }
-
-    if (G_IS_BROWSER) {
-        return "logo_demo.png";
-    }
-
     return "logo.png";
 }
 

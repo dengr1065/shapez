@@ -115,24 +115,11 @@ export class HubGoals extends BasicSerializableObject {
                 if (ev.key === "p") {
                     // root is not guaranteed to exist within ~0.5s after loading in
                     if (this.root && this.root.app && this.root.app.gameAnalytics) {
-                        if (!this.isEndOfDemoReached()) {
-                            this.onGoalCompleted();
-                        }
+                        this.onGoalCompleted();
                     }
                 }
             });
         }
-    }
-
-    /**
-     * Returns whether the end of the demo is reached
-     * @returns {boolean}
-     */
-    isEndOfDemoReached() {
-        return (
-            !this.root.gameMode.getIsFreeplayAvailable() &&
-            this.level >= this.root.gameMode.getLevelDefinitions().length
-        );
     }
 
     /**
@@ -196,12 +183,6 @@ export class HubGoals extends BasicSerializableObject {
     isRewardUnlocked(reward) {
         if (G_IS_DEV && globalConfig.debug.allBuildingsUnlocked) {
             return true;
-        }
-        if (
-            reward === enumHubGoalRewards.reward_blueprints &&
-            this.root.app.restrictionMgr.isLimitedVersion()
-        ) {
-            return false;
         }
 
         if (this.root.gameMode.getLevelDefinitions().length < 1) {
@@ -268,7 +249,6 @@ export class HubGoals extends BasicSerializableObject {
         const reward = this.currentGoal.reward;
         this.gainedRewards[reward] = (this.gainedRewards[reward] || 0) + 1;
 
-        this.root.app.gameAnalytics.handleLevelCompleted(this.level);
         ++this.level;
         this.computeNextGoal();
 
@@ -357,8 +337,6 @@ export class HubGoals extends BasicSerializableObject {
         this.upgradeImprovements[upgradeId] += tierData.improvement;
 
         this.root.signals.upgradePurchased.dispatch(upgradeId);
-
-        this.root.app.gameAnalytics.handleUpgradeUnlocked(upgradeId, currentLevel);
 
         return true;
     }

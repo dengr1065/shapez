@@ -1,11 +1,9 @@
 import { CHANGELOG } from "../changelog";
 import { cachebust } from "../core/cachebust";
-import { globalConfig, THIRDPARTY_URLS } from "../core/config";
+import { globalConfig } from "../core/config";
 import { GameState } from "../core/game_state";
 import { createLogger } from "../core/logging";
-import { queryParamOptions } from "../core/query_parameters";
-import { authorizeViaSSOToken } from "../core/steam_sso";
-import { getLogoSprite, timeoutPromise } from "../core/utils";
+import { getLogoSprite } from "../core/utils";
 import { getRandomHint } from "../game/hints";
 import { HUDModalDialogs } from "../game/hud/parts/modal_dialogs";
 import { PlatformWrapperImplBrowser } from "../platform/browser/wrapper";
@@ -46,49 +44,6 @@ export class PreloadState extends GameState {
         this.startLoading();
     }
 
-    async fetchDiscounts() {
-        await timeoutPromise(
-            fetch("https://analytics.shapez.io/v1/discounts")
-                .then(res => res.json())
-                .then(data => {
-                    globalConfig.currentDiscount = Number(
-                        data["1318690"].data.price_overview.discount_percent
-                    );
-                    logger.log("Fetched current discount:", globalConfig.currentDiscount);
-                }),
-            2000
-        ).catch(err => {
-            logger.warn("Failed to fetch current discount:", err);
-        });
-    }
-
-    async sendBeacon() {
-        if (G_IS_STANDALONE && !G_IS_STEAM_DEMO) {
-            return;
-        }
-        if (queryParamOptions.campaign) {
-            fetch(
-                "https://analytics.shapez.io/campaign/" +
-                    queryParamOptions.campaign +
-                    "?lpurl=nocontent&fbclid=" +
-                    (queryParamOptions.fbclid || "") +
-                    "&gclid=" +
-                    (queryParamOptions.gclid || "")
-            ).catch(err => {
-                console.warn("Failed to send beacon:", err);
-            });
-        }
-        if (queryParamOptions.embedProvider) {
-            fetch(
-                "https://analytics.shapez.io/campaign/embed_" +
-                    queryParamOptions.embedProvider +
-                    "?lpurl=nocontent"
-            ).catch(err => {
-                console.warn("Failed to send beacon:", err);
-            });
-        }
-    }
-
     onLeave() {
         // this.dialogs.cleanup();
     }
@@ -105,9 +60,6 @@ export class PreloadState extends GameState {
                 }
             })
             .then(() => this.setStatus("Creating platform wrapper", 3))
-
-            .then(() => this.sendBeacon())
-            .then(() => authorizeViaSSOToken(this.app, this.dialogs))
 
             .then(() => this.app.platformWrapper.initialize())
 
@@ -138,11 +90,6 @@ export class PreloadState extends GameState {
             })
 
             .then(() => this.setStatus("Initializing libraries", 12))
-            .then(() => this.app.analytics.initialize())
-            .then(() => this.app.gameAnalytics.initialize())
-
-            .then(() => this.setStatus("Connecting to api", 15))
-            .then(() => this.fetchDiscounts())
 
             .then(() => this.setStatus("Initializing settings", 20))
             .then(() => {
@@ -158,10 +105,6 @@ export class PreloadState extends GameState {
 
             .then(() => this.setStatus("Initializing language", 25))
             .then(() => {
-                if (G_CHINA_VERSION || G_WEGAME_VERSION) {
-                    return this.app.settings.updateLanguage("zh-CN");
-                }
-
                 if (this.app.settings.getLanguage() === "auto-detect") {
                     const language = autoDetectLanguageId();
                     logger.log("Setting language to", language);
@@ -180,11 +123,6 @@ export class PreloadState extends GameState {
             .then(() => this.setStatus("Initializing sounds", 30))
             .then(() => {
                 return this.app.sound.initialize();
-            })
-
-            .then(() => this.setStatus("Initializing restrictions", 34))
-            .then(() => {
-                return this.app.restrictionMgr.initialize();
             })
 
             .then(() => this.setStatus("Initializing savegames", 38))
@@ -219,14 +157,6 @@ export class PreloadState extends GameState {
             .then(() => this.setStatus("Checking changelog", 95))
             .then(() => {
                 if (G_IS_DEV && globalConfig.debug.disableUpgradeNotification) {
-                    return;
-                }
-
-                if (G_CHINA_VERSION || G_WEGAME_VERSION) {
-                    return;
-                }
-
-                if (G_IS_STEAM_DEMO || !G_IS_STANDALONE) {
                     return;
                 }
 
@@ -289,9 +219,6 @@ export class PreloadState extends GameState {
     }
 
     update() {
-        if (G_CHINA_VERSION || G_WEGAME_VERSION) {
-            return;
-        }
         const now = performance.now();
         if (now - this.lastHintShown > this.nextHintDuration) {
             this.lastHintShown = now;
@@ -323,9 +250,6 @@ export class PreloadState extends GameState {
     setStatus(text, progress) {
         logger.log("✅ " + text);
 
-        if (G_CHINA_VERSION || G_WEGAME_VERSION) {
-            return Promise.resolve();
-        }
         this.currentStatus = text;
         this.statusText.innerText = text;
         this.progressElement.style.width = 80 + (progress / 100) * 20 + "%";

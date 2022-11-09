@@ -28,8 +28,6 @@ export const enumHubGoalRewards = {
     reward_virtual_processing: "reward_virtual_processing",
     reward_filter: "reward_filter",
 
-    reward_demo_end: "reward_demo_end",
-
     reward_blueprints: "reward_blueprints",
     reward_freeplay: "reward_freeplay",
 

@@ -3,7 +3,6 @@ import { Application } from "../application";
 /* typehints:end */
 
 import { createLogger } from "../core/logging";
-import { WEB_STEAM_SSO_AUTHENTICATED } from "../core/steam_sso";
 import { T } from "../translations";
 
 const logger = createLogger("setting_types");
@@ -153,13 +152,6 @@ export class EnumSetting extends BaseSetting {
 
         return `
             <div class="setting cardbox ${available ? "enabled" : "disabled"}">
-                ${
-                    available
-                        ? ""
-                        : `<span class="standaloneOnlyHint">${
-                              WEB_STEAM_SSO_AUTHENTICATED ? "" : T.demo.settingNotAvailable
-                          }</span>`
-                }
                 <div class="row">
                     <label>${T.settings.labels[this.id].title}</label>
                     <div class="value enum" data-setting="${this.id}"></div>
@@ -237,14 +229,6 @@ export class BoolSetting extends BaseSetting {
         const available = this.getIsAvailable(app);
         return `
         <div class="setting cardbox ${available ? "enabled" : "disabled"}">
-            ${
-                available
-                    ? ""
-                    : `<span class="standaloneOnlyHint">${
-                          WEB_STEAM_SSO_AUTHENTICATED ? "" : T.demo.settingNotAvailable
-                      }</span>`
-            }
-
             <div class="row">
                 <label>${T.settings.labels[this.id].title}</label>
                 <div class="value checkbox checked" data-setting="${this.id}">
@@ -303,14 +287,6 @@ export class RangeSetting extends BaseSetting {
         const available = this.getIsAvailable(app);
         return `
         <div class="setting cardbox ${available ? "enabled" : "disabled"}">
-            ${
-                available
-                    ? ""
-                    : `<span class="standaloneOnlyHint">${
-                          WEB_STEAM_SSO_AUTHENTICATED ? "" : T.demo.settingNotAvailable
-                      }</span>`
-            }
-
             <div class="row">
                 <label>${T.settings.labels[this.id].title}</label>
                 <div class="value rangeInputContainer noPressEffect" data-setting="${this.id}">

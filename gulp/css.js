@@ -124,11 +124,7 @@ function gulptasksCSS($, gulp, buildFolder, browserSync) {
     });
 
     gulp.task("css.dev", gulp.parallel("css.main.dev", "css.resources.dev"));
-    gulp.task("css.prod", gulp.parallel("css.main.prod", "css.resources.prod"));
-    gulp.task(
-        "css.prod-standalone",
-        gulp.parallel("css.main.prod-standalone", "css.resources.prod-standalone")
-    );
+    gulp.task("css", gulp.parallel("css.main.prod-standalone", "css.resources.prod-standalone"));
 }
 
 module.exports = {

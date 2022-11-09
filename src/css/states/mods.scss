@@ -27,27 +27,6 @@
         text-align: center;
         max-width: 80%;
         align-self: center;
-
-        .steamLink {
-            @include S(height, 50px);
-            @include S(width, 220px);
-            background: #171a23 center center / contain no-repeat;
-            overflow: hidden;
-            display: block;
-            text-indent: -999em;
-            cursor: pointer;
-            @include S(margin-top, 30px);
-            pointer-events: all;
-            transition: all 0.12s ease-in;
-            transition-property: opacity, transform;
-
-            box-shadow: 0 D(3px) D(10px) rgba(96, 163, 136, 0.5);
-            @include S(border-radius, $globalBorderRadius);
-
-            &:hover {
-                opacity: 0.9;
-            }
-        }
     }
 
     .modsStats {

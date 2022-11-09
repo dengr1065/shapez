@@ -1,6 +1,5 @@
 const glob = require("glob");
 const execSync = require("child_process").execSync;
-const trim = require("trim");
 const fs = require("fs");
 const path = require("path");
 
@@ -34,14 +33,6 @@ module.exports = {
     },
 
     getVersion() {
-        return trim(fs.readFileSync(path.join(__dirname, "..", "version")).toString());
-    },
-
-    /**
-     * @param {string} url
-     * @param {string} commitHash
-     */
-    cachebust(url, commitHash) {
-        return "/v/" + commitHash + "/" + url;
+        return require("../package.json").version;
     },
 };

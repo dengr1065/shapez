@@ -65,17 +65,6 @@ export class HubSystem extends GameSystemWithFilter {
 
         this.hubSprite.draw(context, 0, 0, w, h);
 
-        if (this.root.hubGoals.isEndOfDemoReached()) {
-            // End of demo
-            context.font = "bold 12px GameFont";
-            context.fillStyle = "#fd0752";
-            context.textAlign = "center";
-            context.fillText(T.buildings.hub.endOfDemo.toUpperCase(), w / 2, h / 2 + 6);
-            context.textAlign = "left";
-
-            return;
-        }
-
         const definition = this.root.hubGoals.currentGoal.definition;
         definition.drawCentered(45, 58, parameters, 36);
 

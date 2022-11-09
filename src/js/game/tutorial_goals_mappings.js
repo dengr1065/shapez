@@ -64,7 +64,6 @@ export const enumHubGoalRewardsToContentUnlocked = {
     [enumHubGoalRewards.reward_blueprints]: null,
     [enumHubGoalRewards.no_reward]: null,
     [enumHubGoalRewards.no_reward_freeplay]: null,
-    [enumHubGoalRewards.reward_demo_end]: null,
 };
 
 if (G_IS_DEV) {

@@ -6,7 +6,6 @@ export const IS_DEBUG =
     G_IS_DEV &&
     typeof window !== "undefined" &&
     window.location.port === "3005" &&
-    (window.location.host.indexOf("localhost:") >= 0 || window.location.host.indexOf("192.168.0.") >= 0) &&
     window.location.search.indexOf("nodebug") < 0;
 
 export const SUPPORT_TOUCH = false;
@@ -34,18 +33,6 @@ export const THIRDPARTY_URLS = {
 
     modBrowser: "https://shapez.mod.io/",
 };
-
-/**
- * @param {Application} app
- * @param {string} campaign
- */
-export function openStandaloneLink(app, campaign) {
-    const discount = globalConfig.currentDiscount > 0 ? "_discount" + globalConfig.currentDiscount : "";
-    const steamSuffix = G_IS_STEAM_DEMO ? "_steamdemo" : "";
-    const event = campaign + discount + steamSuffix;
-    app.platformWrapper.openExternalLink(THIRDPARTY_URLS.standaloneCampaignLink.replace("$campaign", event));
-    app.gameAnalytics.noteMinor("g.stdlink." + event);
-}
 
 export const globalConfig = {
     // Size of a single tile in Pixels.
@@ -130,8 +117,6 @@ export const globalConfig = {
 
     rendering: {},
     debug: require("./config.local").default,
-
-    currentDiscount: 0,
 
     // Secret vars
     info: {

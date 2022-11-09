@@ -1,6 +1,5 @@
 import { AnimationFrame } from "./core/animation_frame";
 import { BackgroundResourcesLoader } from "./core/background_resources_loader";
-import { IS_MOBILE } from "./core/config";
 import { GameState } from "./core/game_state";
 import { GLOBAL_APP, setGlobalApp } from "./core/globals";
 import { InputDistributor } from "./core/input_distributor";
@@ -10,11 +9,7 @@ import { StateManager } from "./core/state_manager";
 import { TrackedState } from "./core/tracked_state";
 import { getPlatformName, waitNextFrame } from "./core/utils";
 import { Vector } from "./core/vector";
-import { AdProviderInterface } from "./platform/ad_provider";
-import { NoAdProvider } from "./platform/ad_providers/no_ad_provider";
 import { NoAchievementProvider } from "./platform/browser/no_achievement_provider";
-import { AnalyticsInterface } from "./platform/analytics";
-import { GoogleAnalyticsImpl } from "./platform/browser/google_analytics";
 import { SoundImplBrowser } from "./platform/browser/sound";
 import { PlatformWrapperImplBrowser } from "./platform/browser/wrapper";
 import { PlatformWrapperImplElectron } from "./platform/electron/wrapper";
@@ -26,15 +21,11 @@ import { ChangelogState } from "./states/changelog";
 import { InGameState } from "./states/ingame";
 import { KeybindingsState } from "./states/keybindings";
 import { MainMenuState } from "./states/main_menu";
-import { MobileWarningState } from "./states/mobile_warning";
 import { PreloadState } from "./states/preload";
 import { SettingsState } from "./states/settings";
-import { ShapezGameAnalytics } from "./platform/browser/game_analytics";
-import { RestrictionManager } from "./core/restriction_manager";
 import { PuzzleMenuState } from "./states/puzzle_menu";
 import { ClientAPI } from "./platform/api";
 import { LoginState } from "./states/login";
-import { WegameSplashState } from "./states/wegame_splash";
 import { MODS } from "./mods/modloader";
 import { MOD_SIGNALS } from "./mods/mod_signals";
 import { ModsState } from "./states/mods";
@@ -94,9 +85,6 @@ export class Application {
         this.backgroundResourceLoader = new BackgroundResourcesLoader(this);
         this.clientApi = new ClientAPI(this);
 
-        // Restrictions (Like demo etc)
-        this.restrictionMgr = new RestrictionManager(this);
-
         // Platform dependent stuff
 
         /** @type {StorageInterface} */
@@ -110,15 +98,6 @@ export class Application {
 
         /** @type {AchievementProviderInterface} */
         this.achievementProvider = null;
-
-        /** @type {AdProviderInterface} */
-        this.adProvider = null;
-
-        /** @type {AnalyticsInterface} */
-        this.analytics = null;
-
-        /** @type {ShapezGameAnalytics} */
-        this.gameAnalytics = null;
 
         this.initPlatformDependentInstances();
 
@@ -135,7 +114,7 @@ export class Application {
         this.trackedIsRenderable = new TrackedState(this.onAppRenderableStateChanged, this);
 
         /** @type {TypedTrackedState<boolean>} */
-        this.trackedIsPlaying = new TrackedState(this.onAppPlayingStateChanged, this);
+        this.trackedIsPlaying = new TrackedState(() => {});
 
         // Dimensions
         this.screenWidth = 0;
@@ -153,16 +132,7 @@ export class Application {
 
         Loader.linkAppAfterBoot(this);
 
-        if (G_WEGAME_VERSION) {
-            this.stateMgr.moveToState("WegameSplashState");
-        }
-
-        // Check for mobile
-        else if (IS_MOBILE) {
-            this.stateMgr.moveToState("MobileWarningState");
-        } else {
-            this.stateMgr.moveToState("PreloadState");
-        }
+        this.stateMgr.moveToState("PreloadState");
 
         // Starting rendering
         this.ticker.frameEmitted.add(this.onFrameEmitted, this);
@@ -186,11 +156,7 @@ export class Application {
             this.platformWrapper = new PlatformWrapperImplBrowser(this);
         }
 
-        // Start with empty ad provider
-        this.adProvider = new NoAdProvider(this);
         this.sound = new SoundImplBrowser(this);
-        this.analytics = new GoogleAnalyticsImpl(this);
-        this.gameAnalytics = new ShapezGameAnalytics(this);
         this.achievementProvider = new NoAchievementProvider(this);
     }
 
@@ -200,9 +166,7 @@ export class Application {
     registerStates() {
         /** @type {Array<typeof GameState>} */
         const states = [
-            WegameSplashState,
             PreloadState,
-            MobileWarningState,
             MainMenuState,
             InGameState,
             SettingsState,
@@ -331,14 +295,6 @@ export class Application {
         }
 
         this.sound.onPageRenderableStateChanged(renderable);
-    }
-
-    onAppPlayingStateChanged(playing) {
-        try {
-            this.adProvider.setPlayStatus(playing);
-        } catch (ex) {
-            console.warn("Play status changed");
-        }
     }
 
     /**

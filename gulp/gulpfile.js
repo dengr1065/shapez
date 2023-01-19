@@ -243,6 +243,7 @@ for (const variant in BUILD_VARIANTS) {
     gulp.task(
         buildName + ".code",
         gulp.series(
+            "localConfig.findOrCreate",
             data.standalone ? "sounds.fullbuildHQ" : "sounds.fullbuild",
             "translations.fullBuild",
             "js." + variant + ".prod"
@@ -260,14 +261,13 @@ for (const variant in BUILD_VARIANTS) {
 
     // bundle
     if (data.standalone) {
-        gulp.task(
-            "bundle." + variant + ".from-windows",
-            gulp.series(buildName, "standalone." + variant + ".build-from-windows")
-        );
-        gulp.task(
-            "bundle." + variant + ".from-darwin",
-            gulp.series(buildName, "standalone." + variant + ".build-from-darwin")
-        );
+        const commonTasks = [buildName, `standalone.${variant}.prepare`];
+        for (const platform of ["win64", "linux64", "darwin64"]) {
+            gulp.task(
+                "bundle." + variant + "." + platform,
+                gulp.series(...commonTasks, "standalone." + variant + ".package." + platform)
+            );
+        }
     }
 
     // serve
@@ -285,32 +285,6 @@ gulp.task(
 gulp.task(
     "deploy.prod",
     gulp.series("utils.requireCleanWorkingTree", "build.web-shapezio", "ftp.upload.prod")
-);
-
-// Bundling (pre upload)
-gulp.task(
-    "bundle.steam.from-darwin",
-    gulp.series("utils.cleanBuildOutputFolder", "bundle.standalone-steam.from-darwin")
-);
-gulp.task(
-    "bundle.steam.from-windows",
-    gulp.series(
-        "utils.cleanBuildOutputFolder",
-        "bundle.standalone-steam.from-windows",
-        "bundle.standalone-steam-china.from-windows"
-    )
-);
-gulp.task(
-    "bundle.steam-demo.from-darwin",
-    gulp.series("utils.cleanBuildOutputFolder", "bundle.standalone-steam-demo.from-darwin")
-);
-gulp.task(
-    "bundle.steam-demo.from-windows",
-    gulp.series(
-        "utils.cleanBuildOutputFolder",
-        "bundle.standalone-steam-demo.from-windows",
-        "bundle.standalone-steam-china-demo.from-windows"
-    )
 );
 
 // Default task (dev, localhost)

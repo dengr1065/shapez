@@ -10,13 +10,6 @@ const execSync = require("child_process").execSync;
 const electronNotarize = require("electron-notarize");
 const { BUILD_VARIANTS } = require("./build_variants");
 
-let signAsync;
-try {
-    signAsync = require("tobspr-osx-sign").signAsync;
-} catch (ex) {
-    console.warn("tobspr-osx-sign not installed, can not create osx builds");
-}
-
 function gulptasksStandalone($, gulp) {
     for (const variant in BUILD_VARIANTS) {
         const variantData = BUILD_VARIANTS[variant];
@@ -34,6 +27,7 @@ function gulptasksStandalone($, gulp) {
 
         gulp.task(taskPrefix + ".prepare.copyPrefab", () => {
             const requiredFiles = [
+                path.join(electronBaseDir, "src", "**", "*.*"),
                 path.join(electronBaseDir, "node_modules", "**", "*.*"),
                 path.join(electronBaseDir, "node_modules", "**", ".*"),
                 path.join(electronBaseDir, "wegame_sdk", "**", "*.*"),
@@ -44,12 +38,7 @@ function gulptasksStandalone($, gulp) {
         });
 
         gulp.task(taskPrefix + ".prepare.writeAppId", cb => {
-            if (variantData.steamAppId) {
-                fs.writeFileSync(
-                    path.join(tempDestBuildDir, "steam_appid.txt"),
-                    String(variantData.steamAppId)
-                );
-            }
+            // no-op
             cb();
         });
 
@@ -61,7 +50,6 @@ function gulptasksStandalone($, gulp) {
                     },
                     devDependencies: pj.devDependencies,
                     dependencies: pj.dependencies,
-                    optionalDependencies: pj.optionalDependencies,
                 },
                 null,
                 4
@@ -81,11 +69,7 @@ function gulptasksStandalone($, gulp) {
         });
 
         gulp.task(taskPrefix + ".killRunningInstances", cb => {
-            try {
-                execSync("taskkill /F /IM shapezio.exe");
-            } catch (ex) {
-                console.warn("Failed to kill running instances, maybe none are up.");
-            }
+            // no-op
             cb();
         });
 
@@ -109,17 +93,6 @@ function gulptasksStandalone($, gulp) {
          * @param {function():void} cb
          */
         function packageStandalone(platform, arch, cb, isRelease = true) {
-            const privateArtifactsPath = "node_modules/shapez.io-private-artifacts";
-
-            // Only use asar on steam builds (not supported by wegame)
-            let asar = Boolean(variantData.steamAppId);
-
-            // Unpack private artifacts though
-            if (asar && fs.existsSync(path.join(tempDestBuildDir, privateArtifactsPath))) {
-                // @ts-expect-error
-                asar = { unpackDir: privateArtifactsPath };
-            }
-
             packager({
                 dir: tempDestBuildDir,
                 appCopyright: "tobspr Games",
@@ -127,7 +100,7 @@ function gulptasksStandalone($, gulp) {
                 buildVersion: "1.0.0",
                 arch,
                 platform,
-                asar: asar,
+                asar: true,
                 executableName: "shapezio",
                 icon: path.join(electronBaseDir, "favicon"),
                 name: "shapez",
@@ -135,22 +108,6 @@ function gulptasksStandalone($, gulp) {
                 overwrite: true,
                 appBundleId: "tobspr.shapezio." + variant,
                 appCategoryType: "public.app-category.games",
-                ...(isRelease &&
-                    platform === "darwin" && {
-                        osxSign: {
-                            "identity": process.env.SHAPEZ_CLI_APPLE_CERT_NAME,
-                            "hardenedRuntime": true,
-                            "entitlements": "entitlements.plist",
-                            "entitlements-inherit": "entitlements.plist",
-                            // @ts-ignore
-                            "signatureFlags": ["library"],
-                            "version": "16.0.7",
-                        },
-                        osxNotarize: {
-                            appleId: process.env.SHAPEZ_CLI_APPLE_ID,
-                            appleIdPassword: process.env.SHAPEZ_CLI_APPLE_APP_PW,
-                        },
-                    }),
             }).then(
                 appPaths => {
                     console.log("Packages created:", appPaths);
@@ -165,36 +122,6 @@ function gulptasksStandalone($, gulp) {
                                 path.join(appPath, "LICENSE"),
                                 fs.readFileSync(path.join(__dirname, "..", "LICENSE"))
                             );
-
-                            fs.writeFileSync(
-                                path.join(appPath, "steam_appid.txt"),
-                                String(variantData.steamAppId)
-                            );
-
-                            if (platform === "linux") {
-                                // Write launcher script
-                                fs.writeFileSync(
-                                    path.join(appPath, "play.sh"),
-                                    '#!/usr/bin/env bash\n./shapezio --no-sandbox "$@"\n'
-                                );
-                                fs.chmodSync(path.join(appPath, "play.sh"), 0o775);
-                            }
-
-                            if (platform === "darwin") {
-                                if (!isRelease) {
-                                    // Needs special location
-                                    fs.writeFileSync(
-                                        path.join(
-                                            appPath,
-                                            "shapez.app",
-                                            "Contents",
-                                            "MacOS",
-                                            "steam_appid.txt"
-                                        ),
-                                        String(variantData.steamAppId)
-                                    );
-                                }
-                            }
                         }
                     });
 
@@ -208,91 +135,9 @@ function gulptasksStandalone($, gulp) {
         }
 
         // Manual signing with patched @electron/osx-sign (we need --no-strict)
-        gulp.task(taskPrefix + ".package.darwin64", cb =>
-            packageStandalone(
-                "darwin",
-                "x64",
-                () => {
-                    const appFile = path.join(tempDestDir, "shapez-darwin-x64");
-                    const appFileInner = path.join(appFile, "shapez.app");
-                    console.warn("++ Signing ++");
-
-                    if (variantData.steamAppId) {
-                        const appIdDest = path.join(
-                            path.join(appFileInner, "Contents", "MacOS"),
-                            "steam_appid.txt"
-                        );
-                        // console.warn("++ Preparing ++");
-                        // fse.copySync(path.join(tempDestBuildDir, "steam_appid.txt"), appIdDest);
-
-                        console.warn("Signing steam_appid.txt");
-
-                        execSync(
-                            `codesign --force --verbose --options runtime --timestamp --no-strict --sign "${
-                                process.env.SHAPEZ_CLI_APPLE_CERT_NAME
-                            }" --entitlements "${path.join(__dirname, "entitlements.plist")}" ${appIdDest}`,
-                            {
-                                cwd: appFile,
-                            }
-                        );
-                    }
-
-                    console.warn("Base dir:", appFile);
-
-                    signAsync({
-                        app: appFileInner,
-                        hardenedRuntime: true,
-                        identity: process.env.SHAPEZ_CLI_APPLE_CERT_NAME,
-                        strictVerify: false,
-
-                        version: "16.0.7",
-                        type: "distribution",
-                        optionsForFile: f => {
-                            return {
-                                entitlements: path.join(__dirname, "entitlements.plist"),
-                                hardenedRuntime: true,
-                                signatureFlags: ["runtime"],
-                            };
-                        },
-                    }).then(() => {
-                        execSync(`codesign --verify --verbose ${path.join(appFile, "shapez.app")}`, {
-                            cwd: appFile,
-                        });
-
-                        console.warn("++ Notarizing ++");
-                        electronNotarize
-                            .notarize({
-                                appPath: path.join(appFile, "shapez.app"),
-                                tool: "legacy",
-                                appBundleId: "tobspr.shapezio.standalone",
-
-                                appleId: process.env.SHAPEZ_CLI_APPLE_ID,
-                                appleIdPassword: process.env.SHAPEZ_CLI_APPLE_APP_PW,
-                                teamId: process.env.SHAPEZ_CLI_APPLE_TEAM_ID,
-                            })
-                            .then(() => {
-                                console.warn("-> Notarized!");
-                                cb();
-                            });
-                    });
-                },
-                false
-            )
-        );
-
+        gulp.task(taskPrefix + ".package.darwin64", cb => packageStandalone("darwin", "x64", cb));
         gulp.task(taskPrefix + ".package.win64", cb => packageStandalone("win32", "x64", cb));
         gulp.task(taskPrefix + ".package.linux64", cb => packageStandalone("linux", "x64", cb));
-        gulp.task(
-            taskPrefix + ".build-from-windows",
-            gulp.series(
-                taskPrefix + ".prepare",
-                gulp.parallel(taskPrefix + ".package.win64", taskPrefix + ".package.linux64")
-            )
-        );
-        gulp.task(
-            taskPrefix + ".build-from-darwin",
-            gulp.series(taskPrefix + ".prepare", gulp.parallel(taskPrefix + ".package.darwin64"))
-        );
     }
 
     // Steam helpers

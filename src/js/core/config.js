@@ -9,7 +9,7 @@ export const IS_DEBUG =
     (window.location.host.indexOf("localhost:") >= 0 || window.location.host.indexOf("192.168.0.") >= 0) &&
     window.location.search.indexOf("nodebug") < 0;
 
-export const SUPPORT_TOUCH = false;
+export const SUPPORT_TOUCH = true;
 
 const smoothCanvas = true;
 
@@ -146,7 +146,7 @@ export const globalConfig = {
     },
 };
 
-export const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+export const IS_MOBILE = true;
 
 // Automatic calculations
 globalConfig.minerSpeedItemsPerSecond = globalConfig.beltSpeedItemsPerSecond / 5;
